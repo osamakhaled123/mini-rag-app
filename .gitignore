@@ -208,3 +208,5 @@ __marimo__/
 
 mini-rag-venv
 .idea
+assets/postman
+assets/.postman
