@@ -4,7 +4,7 @@ Implement a mini RAG model for question answering
 
 ## Requirements
 
-#### Install Python
+### Install Python
 
 1) Python 3.8 or later
 
@@ -24,7 +24,7 @@ python3 -m venv venv
 Source venv/bin/activate
 ```
 
-#### Install the required packages
+### Install the required packages
 
 ```bash
 pip install -r requirements.txt
@@ -37,3 +37,9 @@ cp .env.example .env
 ```
 
 - Set **your** environment variables in the '.env' file.
+
+### Run the FastAPI server
+
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 5000
+```
