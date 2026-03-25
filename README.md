@@ -1,28 +1,34 @@
 # mini-rag-app
 
-Implement a mini RAG model for question answering
+Implement a minimal implementation of the RAG model for question answering
 
 ## Requirements
 
-### Install Python
+- Python 3.8 or later
 
-1) Python 3.8 or later
+### Install Python using MiniConda
 
-```bash
-sudo apt install python3-pip
-```
 
-2) Create a new working environment (virtual environment):
+1) Download and install MiniConda from here (https://www.anaconda.com/docs/getting-started/miniconda/main#advanced-install-options)
 
-```bash
-python3 -m venv venv
-```
-
-3) Activate the new working environment
+2) Create a new virtual environment using the following command:
 
 ```bash
-Source venv/bin/activate
+$ conda -n create [name your environment] python=3.8
 ```
+3) Activate the environment
+
+```bash
+$ conda -activate [name your environment]
+```
+
+### (Optional) setup your command line interface for better readability
+
+```bash
+export PS1="\[\033[01;32m\]\u@\h:\w\n\[\033[00m\]\$"
+```
+
+## Installation
 
 ### Install the required packages
 
