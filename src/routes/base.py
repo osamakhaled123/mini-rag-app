@@ -1,5 +1,4 @@
 from fastapi import FastAPI, APIRouter
-from dotenv import load_dotenv
 
 base_router = APIRouter(
     prefix="/api/v1",
