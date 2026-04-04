@@ -8,3 +8,6 @@ class Settings(BaseSettings):
 
     class config:
         env_file=".env"
+
+def get_settings():
+    return Settings()        
