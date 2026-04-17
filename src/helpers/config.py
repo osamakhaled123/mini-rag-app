@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     APP_VERSION: str
     OPEN_API_KEY: str
 
-    class config:
+    class Config:
         env_file=".env"
 
 def get_settings():
