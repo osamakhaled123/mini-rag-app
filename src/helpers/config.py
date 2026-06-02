@@ -6,6 +6,11 @@ class Settings(BaseSettings):
     APP_VERSION: str
     OPEN_API_KEY: str
 
+    FILE_ALLOWED_TYPES: list
+    FILE_MAX_SIZE: int #MB
+    
+    FILE_DEFAULT_CHUNK_SIZE: int #512 KB
+    
     class Config:
         env_file=".env"
 
