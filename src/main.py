@@ -17,7 +17,6 @@ async def lifespan(app: FastAPI):
     
     try:
         yield
-
     finally:
         print("Closing MongoDB connection...")
         app.mongo_conn.close()

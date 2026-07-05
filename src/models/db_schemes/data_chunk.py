@@ -1,8 +1,8 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 from bson.objectid import ObjectId
 from typing import Optional
 
-class Project(BaseModel):
+class DataChunk(BaseModel):
     
     id: Optional[ObjectId] = Field(None, alias="_id")
     chunk_text: str = Field(..., min_length=1)
