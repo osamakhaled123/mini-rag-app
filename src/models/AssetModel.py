@@ -34,11 +34,29 @@ class AssetModel(BaseDataModel):
         asset.id = record.inserted_id 
         return asset       
     
-    async def get_all_project_id_assets(self, asset_project_id: ObjectId):
-        return await self.collection.find({
+    async def get_all_project_id_assets(self, asset_project_id: ObjectId, asset_type: str = None):
+        records = await self.collection.find({
             "asset_project_id": asset_project_id
-            if isinstance(asset_project_id, ObjectId) else str(asset_project_id)
-        }).to_list(len=None)
+            if isinstance(asset_project_id, ObjectId) else ObjectId(asset_project_id),
+            **({"asset_type": asset_type} if asset_type is not None else {})
+        }).to_list(length=None)
         
+        return[
+            Asset(**record)
+            for record in records
+        ]
         
+    async def get_asset_record(self, asset_project_id: ObjectId, asset_name: str):
+        record = await self.collection.find_one(
+            {
+                "asset_project_id": asset_project_id
+                if isinstance(asset_project_id, ObjectId) else ObjectId(asset_project_id),
+                "asset_name": asset_name
+            }
+        )    
         
+        if record:
+            return Asset(**record)
+        
+        else:
+            return None
