@@ -9,8 +9,17 @@ class BaseController:
         self.app_settings: Settings = get_settings()
         self.base_dir = os.path.dirname(os.path.dirname(__file__))
         
-        self.files_dir = os.path.join(self.base_dir, "assets")
-        self.files_dir = os.path.join(self.files_dir, "files")
+        self.assets_dir = os.path.join(self.base_dir, "assets")
+        self.files_dir = os.path.join(self.assets_dir, "files")
+        self.databases_dir = os.path.join(self.assets_dir, "databases")
         
     def generate_random_string(self, length: int=12):
         return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))    
+    
+    def get_database_path(self, db_name: str):
+        database_path = os.path.join(self.databases_dir, db_name)
+        
+        if not os.path.exists(database_path):
+            os.makedirs(database_path)
+            
+        return database_path
