@@ -215,3 +215,6 @@ assets/postman
 assets/.postman
 
 .vscode
+
+files
+src/assets/databases/
