@@ -71,3 +71,35 @@ class ChunkModel(BaseDataModel):
         
         return records.deleted_count
     
+    async def get_chunks_by_project_id(self, chunk_project_id: ObjectId, 
+                                       page_no: int=1, page_size: int = 150):
+        
+        cursor = self.collection.find({
+                "chunk_project_id": chunk_project_id
+            }).skip(
+                (page_no - 1) * page_size
+            ).limit(page_size)
+        
+        batch = []    
+        async for record in cursor:
+            batch.append(
+                DataChunk(**record)
+            )
+        
+        return batch
+    
+    async def delete_chunks_by_asset_id(self, asset_id: ObjectId):
+        records = await self.collection.delete_many({
+            "chunk_asset_id":asset_id
+        })
+        return records.deleted_count
+    
+    async def get_total_chunks_count(self, project_id: ObjectId):
+        num_records = await self.collection.count_documents(
+            {"chunk_project_id": project_id}
+        )
+        
+        if not num_records:
+            num_records = 0
+            
+        return num_records
