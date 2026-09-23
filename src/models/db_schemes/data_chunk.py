@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 from bson.objectid import ObjectId
 from typing import Optional
+from datetime import datetime, UTC
 
 class DataChunk(BaseModel):
     
@@ -25,3 +26,12 @@ class DataChunk(BaseModel):
                 "unique":False
             }
         ]    
+        
+        
+class RetrievedDocument(BaseModel):
+    text: str
+    score: float
+    inserted_at: datetime        
+    chunk_id: str
+    asset_id: str
+    id: str
