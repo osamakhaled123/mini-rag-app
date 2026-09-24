@@ -255,6 +255,39 @@ async def delete_file(request: Request,
             })
                   
     if documentDB:
+        #RELATED EMBEDDINGS CHUNKS REMOVING
+        deleted_count = await nlp_controller.delete_vector_db_chunks_by_asset_id(project=project, asset_id=str(asset_record.id))
+        if not deleted_count:
+            responses.append({
+                    "signal": ResponseSignal.DOCUMENT_CHUNKS_DELETED_FROM_VECTORDB_ERROR.value,
+                    "file_id": str(asset_record.id)
+                }
+            )
+        
+        else:
+            responses.append({
+                    "signal": ResponseSignal.DOCUMENT_CHUNKS_DELETED_FROM_VECTORDB.value,
+                    "file_id": str(asset_record.id),
+                    "embeddings_deleted_count": deleted_count
+                }
+            )
+        
+        #RELATED CHUNKS REMOVING
+        deleted_count = await chunk_model.delete_chunks_by_asset_id(asset_id=asset_record.id)
+        
+        if deleted_count > 0:
+            responses.append({
+                "signal":ResponseSignal.DOCUMENT_CHUNKS_DELETED_FROM_DATABASE.value,
+                "file_id": str(asset_record.id),
+                "assets_chunks_deleted": deleted_count
+            })
+        
+        else:
+            responses.append({
+                "signal":ResponseSignal.DOCUMENT_CHUNKS_DELETED_FROM_DATABASE_ERROR.value,
+                "file_id": str(asset_record.id)
+            })
+        
         #ASSET REMOVING PROCESS FROM ASSET COLLECTION IN DATABASE
         is_deleted = await asset_model.delete_asset_record(
             asset_project_id=project.id, 
@@ -273,22 +306,8 @@ async def delete_file(request: Request,
             "file_id": str(asset_record.id)
         })
         
-        #RELATED CHUNKS REMOVING
-        deleted_count = await chunk_model.delete_chunks_by_asset_id(asset_id=asset_record.id)
-       
-        if deleted_count > 0:
-            responses.append({
-                "signal":ResponseSignal.DOCUMENT_CHUNKS_DELETED_FROM_DATABASE.value,
-                "file_id": str(asset_record.id),
-                "assets_chunks_deleted": deleted_count
-            })
-        
-        else:
-            responses.append({
-                "signal":ResponseSignal.DOCUMENT_CHUNKS_DELETED_FROM_DATABASE_ERROR.value,
-                "file_id": str(asset_record.id)
-            })
     
+    elif chunks:    
         #RELATED EMBEDDINGS CHUNKS REMOVING
         deleted_count = await nlp_controller.delete_vector_db_chunks_by_asset_id(project=project, asset_id=str(asset_record.id))
         if not deleted_count:
@@ -306,8 +325,6 @@ async def delete_file(request: Request,
                 }
             )
     
-    
-    elif chunks:
         #RELATED CHUNKS REMOVING
         deleted_count = await chunk_model.delete_chunks_by_asset_id(asset_id=asset_record.id)
                
@@ -323,26 +340,10 @@ async def delete_file(request: Request,
                 "signal":ResponseSignal.DOCUMENT_CHUNKS_DELETED_FROM_DATABASE_ERROR.value,
                 "file_id": str(asset_record.id)
             })
-    
-        #RELATED EMBEDDINGS CHUNKS REMOVING
-        deleted_count = await nlp_controller.delete_vector_db_chunks_by_asset_id(project=project, asset_id=str(asset_record.id))
-        if not deleted_count:
-            responses.append({
-                    "signal": ResponseSignal.DOCUMENT_CHUNKS_DELETED_FROM_VECTORDB_ERROR.value,
-                    "file_id": str(asset_record.id)
-                }
-            )
-        
-        else:
-            responses.append({
-                    "signal": ResponseSignal.DOCUMENT_CHUNKS_DELETED_FROM_VECTORDB.value,
-                    "file_id": str(asset_record.id),
-                    "embeddings_deleted_count": deleted_count
-                }
-            )
-    
+            
     
     elif vectorDB:
+        #RELATED EMBEDDINGS CHUNKS REMOVING
         deleted_count = await nlp_controller.delete_vector_db_chunks_by_asset_id(project=project, asset_id=str(asset_record.id))
         if not deleted_count:
             responses.append({
