@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import List
 
 class Settings(BaseSettings):
 
@@ -30,9 +31,11 @@ class Settings(BaseSettings):
     GENERATION_DAFAULT_MAX_TOKENS: int
     GENERATION_DAFAULT_TEMPERATURE: float
     
+    VECTOR_DB_BACKEND_LITERAL: List[str]
     VECTOR_DB_BACKEND: str
     VECTOR_DB_PATH: str
     VECTOR_DB_DISTANCE_METHOD: str
+    VECTOR_DB_PGVEC_INDEX_THRESHOLD: int = 200
 
     PRIMARY_LANG: str
     DEFAULT_LANG: str
