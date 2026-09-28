@@ -47,7 +47,6 @@ class NLPController(BaseController):
         asset_ids = [str(chunk.chunk_asset_id) for chunk in chunks]
         metadatas = [chunk.chunk_metadata for chunk in chunks]
         
-        print(len(texts))
         vectors = self.embedding_client.embed_texts(
             texts=texts, 
             documente_type=DocumentTypeEnums.DOCUMENT.value

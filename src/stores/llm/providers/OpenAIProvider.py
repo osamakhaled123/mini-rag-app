@@ -61,15 +61,11 @@ class OpenAIProvider(LLMInterface):
             self.construct_prompt(prompt=prompt, role=self.enums.USER.value)
         )
         
-        print(f"Model: {self.generation_model_id}")
-        
         response = self.client.chat.completions.create(model=self.generation_model_id,
                                                 messages=messages,
                                                 max_tokens=max_output_token,
                                                 temperature=tempreature)
         
-                
-
         choice = response.choices[0]
 
         if choice.finish_reason == "length":
