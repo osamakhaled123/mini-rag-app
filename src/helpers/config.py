@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     MONGODB_URL: str
     MONGODB_DATABASE: str
     
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_HOST: str
+    POSTGRES_PORT: str
+    POSTGRES_MAIN_DATABASE: str
+    
     INDEXING_PAGE_SIZE: int #BATCH_SIZE
     
     GENERATION_BACKEND: str
