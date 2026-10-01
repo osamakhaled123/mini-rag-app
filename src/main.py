@@ -6,16 +6,21 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from stores.llm import LLMProviderFactory
 from stores.llm.templates import TemplateParser
 from stores.vectordb import VectorDBProviderFactory
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Connecting to MongoDB...")
+    print("Connecting to PostgreSQL...")
     
     settings = get_settings()
-    app.mongo_conn = AsyncIOMotorClient(settings.MONGODB_URL)
-    app.db_client = app.mongo_conn[settings.MONGODB_DATABASE]
     
-    print(f"Connected to Document Database: '{settings.MONGODB_DATABASE}'")
+    postgres_connection = f"postgresql+asyncpg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}:{settings.POSTGRES_PORT}/{settings.POSTGRES_MAIN_DATABASE}"
+    
+    app.db_engine = create_async_engine(url=postgres_connection)
+    app.db_client = sessionmaker(bind=app.db_engine, class_=AsyncSession, expire_on_commit=False)
+    
+    print(f"Connected to PostgreSQL Database: '{settings.POSTGRES_MAIN_DATABASE}'")#Complete
     
     print("\n")
     
@@ -43,9 +48,9 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         
-        print("Closing MongoDB connection...")
-        app.mongo_conn.close()
-        print("MongoDB connection cleanly closed.")
+        print("Closing PostgreSQL connection...")
+        app.db_engine.dispose()
+        print("PostgreSQL connection cleanly closed.")
         #############################################################
         print(f"Closing VectorDB {settings.VECTOR_DB_BACKEND} connection...")
         await app.vectordb_client.disconnect()
