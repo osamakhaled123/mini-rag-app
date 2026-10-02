@@ -1,105 +1,78 @@
-from .enums.DataBaseEnum import DataBaseEnum
-from .db_schemes import DataChunk
+from minirag.schemes import DataChunk
 from .BaseDataModel import BaseDataModel
-from bson.objectid import ObjectId
-from pymongo import InsertOne
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.future import select
+from sqlalchemy import func, delete
+from sqlalchemy.dialects.postgresql import UUID
 
 class ChunkModel(BaseDataModel):
-    def __init__(self, db_client: object):
+    def __init__(self, db_client: sessionmaker):
         super().__init__(db_client=db_client)
-        self.collection = self.db_client[DataBaseEnum.COLLECTION_CHUNK_NAME.value]
         
     @classmethod    
-    async def create_instance(cls, db_client: object):
+    async def create_instance(cls, db_client: sessionmaker):
         instance = cls(db_client=db_client)
-        await instance.init_collection()
         return instance
         
-    async def init_collection(self):
-        all_collections = await self.db_client.list_collection_names()  #useless
-        if DataBaseEnum.COLLECTION_CHUNK_NAME.value not in all_collections:
-            self.collection = self.db_client[DataBaseEnum.COLLECTION_CHUNK_NAME.value]
-            indexes = DataChunk.get_indexes()
-            
-            for index in indexes:
-                self.collection.create_index(
-                    keys=index["key"],
-                    name=index["name"],
-                    unique=index["unique"]
-                )
-    
-        
     async def create_chunk(self, chunk: DataChunk):
-        record = await self.collection.insert_one(
-            chunk.model_dump(by_alias=True, exclude_unset=True)
-            )
-        chunk.id = record.inserted_id
+        async with self.db_client() as session:
+            async with session.begin():
+                session.add(chunk)
+            await session.commit()
+            await session.refresh(chunk)
         
         return chunk
-    
+        
     async def get_chunk(self, chunk_id: str):
-        record = await self.collection.find_one({
-            "_id": ObjectId(chunk_id)
-        })
+        async with self.db_client() as session:
+            async with session.begin():
+                query = select(DataChunk).where(DataChunk.id == chunk_id)
+                chunk = await session.execute(query).scalar_one_or_none()
         
-        if record is None:
-            return None
-        
-        return DataChunk(**record)
-    
+        return chunk
         
     async def insert_many_chunks(self, chunks: list, batch_size: int=100):
-        for chunk in range(0, len(chunks), batch_size):
-            batch = chunks[chunk: chunk + batch_size]
-    
-            operations=[
-                InsertOne(chunk_.model_dump(
-                    by_alias=True, exclude_unset=True
-                ))
-                for chunk_ in batch
-            ]
-            
-            await self.collection.bulk_write(operations)
-            
+        async with self.db_client() as session:
+            async with session.begin():
+                for chunk in range(0, len(chunks), batch_size):
+                    batch = chunks[chunk: chunk + batch_size]   
+                    session.add_all(batch)   
+                
+                await session.commit()  
         return len(chunks)
     
+    async def delete_chunks_by_project_id(self, project_id: UUID):
+        async with self.db_client() as session:
+            async with session.begin():
+                query = delete(DataChunk).where(DataChunk.chunk_project_id == project_id)
+                execution = await session.execute(query)
+                await session.commit()
+        return execution.rowcount
     
-    async def delete_chunks_by_project_id(self, project_id: ObjectId):
-        records = await self.collection.delete_many({
-            "chunk_project_id":project_id
-        })
-        
-        return records.deleted_count
-    
-    async def get_chunks_by_project_id(self, chunk_project_id: ObjectId, 
+    async def get_chunks_by_project_id(self, chunk_project_id: UUID, 
                                        page_no: int=1, page_size: int = 150):
+        async with self.db_client() as session:
+            async with session.begin():
+                cursor = select(DataChunk).where(DataChunk.chunk_project_id == chunk_project_id).offset(
+                    (page_no - 1) * page_size
+                ).limit(page_size)
+                
+                execution = await session.execute(cursor)
+                batch = execution.scalars().all()
         
-        cursor = self.collection.find({
-                "chunk_project_id": chunk_project_id
-            }).skip(
-                (page_no - 1) * page_size
-            ).limit(page_size)
+        return batch    
+                
+    async def delete_chunks_by_asset_id(self, asset_id: UUID):
+        async with self.db_client() as session:
+            async with session.begin():
+                query = delete(DataChunk).where(DataChunk.chunk_asset_id == asset_id)
+                deleted_records = await session.execute(query)
+        return deleted_records.rowcount
         
-        batch = []    
-        async for record in cursor:
-            batch.append(
-                DataChunk(**record)
-            )
-        
-        return batch
     
-    async def delete_chunks_by_asset_id(self, asset_id: ObjectId):
-        records = await self.collection.delete_many({
-            "chunk_asset_id":asset_id
-        })
-        return records.deleted_count
-    
-    async def get_total_chunks_count(self, project_id: ObjectId):
-        num_records = await self.collection.count_documents(
-            {"chunk_project_id": project_id}
-        )
-        
-        if not num_records:
-            num_records = 0
-            
+    async def get_total_chunks_count(self, project_id: UUID):
+        async with self.db_client() as session:
+            async with session.begin():
+                query = select(func.count(DataChunk.id)).where(DataChunk.chunk_project_id == project_id)
+                num_records = await session.execute(query).scalar()
         return num_records
