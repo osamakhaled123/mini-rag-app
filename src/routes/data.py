@@ -19,7 +19,7 @@ data_router = APIRouter(
 
 @data_router.post("/upload/{project_id}")
 async def upload_file(request: Request,
-                      project_id: str, 
+                      project_id: int, 
                       file: UploadFile,
                       app_settings: Settings = Depends(get_settings)):
     
@@ -81,7 +81,7 @@ async def upload_file(request: Request,
     
 @data_router.post("/process/{project_id}")
 async def process_endpoint(request: Request, 
-                           project_id: str, 
+                           project_id: int, 
                            process_request: ProcessingRequest
                            ):
     
@@ -103,9 +103,11 @@ async def process_endpoint(request: Request,
     process_controller = ProcessController(project_id=project_id)
 
     if do_reset == 1:
+        #delete associated vector collection
         collection_name = nlp_controller.creat_collection_name(project_id=project.project_id)
         _ = await nlp_controller.vectordb_client.delete_collection(collection_name=collection_name)
         
+        #delete associated chunks
         _ = await chunk_model.delete_chunks_by_project_id(
             project_id=project.id
         )   
@@ -197,7 +199,7 @@ async def process_endpoint(request: Request,
     
 @data_router.delete("/delete/{project_id}")
 async def delete_file(request: Request,
-                      project_id: str, 
+                      project_id: int, 
                       delete_asset_request: AssetDeletionRequest):
     
     asset_name = delete_asset_request.asset_name
@@ -234,7 +236,6 @@ async def delete_file(request: Request,
         
     responses = []    
     project_controller = ProjectController()
-    print(f"PROJECT_ID: {project.id}")
 
     if file:
         file_path = os.path.join(
