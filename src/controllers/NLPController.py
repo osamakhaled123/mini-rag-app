@@ -17,7 +17,7 @@ class NLPController(BaseController):
         self.logger = logging.getLogger("uvicorn.error")
         
     def creat_collection_name(self, project_id: str):
-        return f"collection_{self.vectordb_client.default_vector_size}_{project_id}".strip()
+        return f"{self.vectordb_client.prefix_name}_collection_{self.vectordb_client.default_vector_size}_{project_id}".strip()
     
     async def reset_vector_db_collection(self, project: Project):
         collection_name = self.creat_collection_name(project_id=project.project_id)
