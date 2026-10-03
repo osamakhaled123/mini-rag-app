@@ -4,7 +4,7 @@ from qdrant_client import QdrantClient, models
 from qdrant_client.models import Distance, VectorParams, PointStruct, FilterSelector, Filter, FieldCondition, MatchValue
 import logging
 from typing import List
-from models.db_schemes import RetrievedDocument
+from models.minirag.schemes import RetrievedDocument
 from datetime import datetime, UTC
 from uuid import uuid4
 from fastapi.encoders import jsonable_encoder
@@ -12,8 +12,7 @@ from fastapi.encoders import jsonable_encoder
 class QDrantDBProvider(VectorDBInterface):
     def __init__(self, db_client: str, 
                  distance_method: str = None, 
-                 default_vector_size: int = 786, 
-                 index_threshold: int = 100):
+                 default_vector_size: int = 786):
         
         self.db_client = db_client
         self.distance_mehtod = None
