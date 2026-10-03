@@ -1,4 +1,5 @@
-databases/*
 files/*
-!databases/.gitkeep
 !files/.gitkeep
+
+databases/*
+!databases/.gitkeep
