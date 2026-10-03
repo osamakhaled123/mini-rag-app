@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     VECTOR_DB_PATH: str
     VECTOR_DB_DISTANCE_METHOD: str
     VECTOR_DB_PGVEC_INDEX_THRESHOLD: int = 200
+    VECTOR_DB_INDEX_TYPE: str
 
     PRIMARY_LANG: str
     DEFAULT_LANG: str
