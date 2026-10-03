@@ -1,5 +1,5 @@
 from .minirag_base import SQLAlchemyBase
-from sqlalchemy import Column, INTEGER, Index, func, Index, String, DateTime, ForeignKey
+from sqlalchemy import Column, INTEGER, Index, func, String, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 import uuid
