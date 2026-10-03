@@ -46,7 +46,7 @@ class ChunkModel(BaseDataModel):
             async with session.begin():
                 query = delete(DataChunk).where(DataChunk.chunk_project_id == project_id)
                 execution = await session.execute(query)
-                await session.commit()
+            await session.commit()
         return execution.rowcount
     
     async def get_chunks_by_project_id(self, chunk_project_id: UUID, 
@@ -67,6 +67,7 @@ class ChunkModel(BaseDataModel):
             async with session.begin():
                 query = delete(DataChunk).where(DataChunk.chunk_asset_id == asset_id)
                 deleted_records = await session.execute(query)
+            await session.commit()
         return deleted_records.rowcount
         
     

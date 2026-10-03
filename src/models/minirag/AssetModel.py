@@ -67,5 +67,6 @@ class AssetModel(BaseDataModel):
                 )
                 
                 result = await session.execute(query)
+            await session.commit()
                 
             return result.rowcount > 0
