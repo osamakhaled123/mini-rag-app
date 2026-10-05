@@ -19,7 +19,7 @@ class QDrantDBProvider(VectorDBInterface):
         self.client = None
         self.collection_ids={}
         self.default_vector_size = default_vector_size
-        self.index_threshold = index_threshold
+        self.prefix_name = VectorDBEnums.QDRANT.value
         
         if DistanceMethodEnums.DOT.value == distance_method:
             self.distance_mehtod = Distance.DOT
@@ -27,7 +27,7 @@ class QDrantDBProvider(VectorDBInterface):
         elif DistanceMethodEnums.COSINE.value == distance_method:
             self.distance_mehtod = Distance.COSINE
         
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger("uvicorn")
     
     async def connect(self):
         self.client = QdrantClient(path=self.db_client)
