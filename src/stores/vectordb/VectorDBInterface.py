@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
-from models.db_schemes import RetrievedDocument
+from models.minirag.schemes import RetrievedDocument
 
 class VectorDBInterface(ABC):
     
@@ -45,18 +45,21 @@ class VectorDBInterface(ABC):
     async def insert_one(self, collection_name: str,
                    text: str,
                    vector: List,
-                   metadata: dict = None,
-                   record_id: str = None):
+                   chunk_id: str,
+                   asset_id: str,
+                   metadata: dict = None):
         pass
     
     
     @abstractmethod
     async def insert_many(self, collection_name: str,
-                    text: List, 
+                    texts: List, 
                     vectors: List,
+                    chunks_ids: List[str],
+                    asset_ids: List[str],
                     metadatas: List = None,
-                    record_ids: List = None, 
-                    batch_size: int = 50):
+                    batch_size: int = 100
+            ):
     
         pass
     
@@ -66,4 +69,8 @@ class VectorDBInterface(ABC):
                          vector: list,
                          limit: int) -> List[RetrievedDocument]:
         
+        pass
+    
+    @abstractmethod
+    async def delete_by_id(self, collection_name: str, asset_id: str):
         pass
