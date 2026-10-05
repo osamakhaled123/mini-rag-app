@@ -13,6 +13,7 @@ class PGVectorTableSchemeEnums(Enum):
     TEXT = "text"
     VECTOR = "vector"
     CHUNK_ID = "chunk_id"
+    ASSET_ID = "asset_id"
     METADATA = "metadata"
 
 class PGVectorDistanceMethodEnums(Enum):
