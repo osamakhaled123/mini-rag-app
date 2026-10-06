@@ -3,7 +3,8 @@ from sqlalchemy import Column, INTEGER, DateTime, func, Index, String, ForeignKe
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 import uuid
-import datetime
+from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel
 from enums.DataBaseEnum import DataBaseEnum
 
@@ -31,7 +32,7 @@ class DataChunk(SQLAlchemyBase):
 class RetrievedDocument(BaseModel):
     text: str
     score: float
-    inserted_at: datetime        
+    inserted_at: Optional[datetime]        
     chunk_id: str
     asset_id: str
     id: str
