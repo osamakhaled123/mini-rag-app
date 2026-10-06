@@ -20,14 +20,13 @@ class QDrantDBProvider(VectorDBInterface):
         self.collection_ids={}
         self.default_vector_size = default_vector_size
         self.prefix_name = VectorDBEnums.QDRANT.value
+        self.logger = logging.getLogger("uvicorn")
         
         if DistanceMethodEnums.DOT.value == distance_method:
             self.distance_mehtod = Distance.DOT
         
         elif DistanceMethodEnums.COSINE.value == distance_method:
             self.distance_mehtod = Distance.COSINE
-        
-        self.logger = logging.getLogger("uvicorn")
     
     async def connect(self):
         self.client = QdrantClient(path=self.db_client)
@@ -65,7 +64,7 @@ class QDrantDBProvider(VectorDBInterface):
             return None
         
         if not collection_name or len(collection_name) == 0:
-            self.logger.error("collection name sent is empty")
+            self.logger.error(f"collection name ({collection_name}) sent is empty")
             return None
         
         return self.client.collection_exists(collection_name=collection_name)
@@ -116,9 +115,9 @@ class QDrantDBProvider(VectorDBInterface):
             return None
 
         self.default_vector_size = embedding_size
-        self.collection_ids[collection_name] = 0
+        #self.collection_ids[collection_name] = 0
                 
-        self.logger.info(f"Creating a Qdrant collection: {collection_name}")
+        self.logger.info(f"Creating a {self.prefix_name} collection: {collection_name}")
         self.client.create_collection(collection_name=collection_name,
                                       vectors_config=VectorParams(size=embedding_size, 
                                                                   distance=self.distance_mehtod))
@@ -148,7 +147,7 @@ class QDrantDBProvider(VectorDBInterface):
             return None
         
         if not collection_name or len(collection_name) == 0:
-            self.logger.error("collection name sent is empty")
+            self.logger.error(f"collection name ({collection_name}) sent is empty")
             return None
         
         if not await self.is_collection_exist(collection_name=collection_name):
@@ -160,7 +159,7 @@ class QDrantDBProvider(VectorDBInterface):
             return None
         
         if len(vector) == 0:
-            self.logger.error(f"Vextor list passed to be inserted in VectorDB {VectorDBEnums.QDRANT.value} is empty")
+            self.logger.error(f"Vextor list passed to be inserted in VectorDB {self.prefix_name} is empty")
             return None
         
         #ids = await self.get_collection_last_record_id(collection_name=collection_name) + 1
@@ -180,7 +179,7 @@ class QDrantDBProvider(VectorDBInterface):
                 ]
             )
         
-            self.collection_ids[collection_name] += 1
+            #self.collection_ids[collection_name] += 1
             
         except Exception as e:
             self.logger.error(f"Error while inserting vector: {e}")
@@ -213,12 +212,16 @@ class QDrantDBProvider(VectorDBInterface):
             self.logger.error("text passed is empty")
             return None
         
-        if len(vectors) == 0:
-            self.logger.error(f"Vextor list passed to be inserted in VectorDB {VectorDBEnums.QDRANT.value} is empty")
+        if len(vectors) == 0 or len(vectors) < len(texts):
+            self.logger.error(f"Vextor list passed to be inserted in VectorDB {self.prefix_name} is empty")
             return None
         
         if not metadatas:
             metadatas = [None] * len(texts)
+
+        elif len(metadatas) < len(texts):
+            difference = len(texts) - len(metadatas)
+            metadatas.extend([None] * difference)
 
         #ids = await self.get_collection_last_record_id(collection_name=collection_name) + 1
         
@@ -248,7 +251,7 @@ class QDrantDBProvider(VectorDBInterface):
                 
                 _ = self.client.upsert(collection_name=collection_name, points=batch_points)
 
-            self.collection_ids[collection_name] += len(texts)
+            #self.collection_ids[collection_name] += len(texts)
             
         except Exception as e:
             self.logger.error(f"Error while inserting batch: {e}")
