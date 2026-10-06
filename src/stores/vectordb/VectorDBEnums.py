@@ -7,6 +7,8 @@ class VectorDBEnums(Enum):
 class DistanceMethodEnums(Enum):
     COSINE="cosine"
     DOT="dot"
+    EUCLIDEAN = "euclidean"
+    MANHATTAN = "manhattan"
     
 class PGVectorTableSchemeEnums(Enum):
     ID = "id"
