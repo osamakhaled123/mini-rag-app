@@ -1,10 +1,21 @@
 from logging.config import fileConfig
+import asyncio
+import sys
+import os
 
-from sqlalchemy import engine_from_config
+# Add src/ to Python path
+SRC_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../../../")
+)
+
+sys.path.insert(0, SRC_DIR)
+
+from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.engine import Connection
 from sqlalchemy import pool
-from schemes import SQLAlchemyBase
-
+from models.minirag.schemes import SQLAlchemyBase
 from alembic import context
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -51,26 +62,35 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def run_migrations_online() -> None:
+def do_run_migrations(connection: Connection) -> None:
+    context.configure(
+        connection=connection, target_metadata=target_metadata
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+async def run_async_migrations() -> None:
     """Run migrations in 'online' mode.
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
+    Use an async engine because the configured PostgreSQL driver is asyncpg.
     """
-    connectable = engine_from_config(
+    connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+    try:
+        async with connectable.connect() as connection:
+            await connection.run_sync(do_run_migrations)
+    finally:
+        await connectable.dispose()
 
-        with context.begin_transaction():
-            context.run_migrations()
+
+def run_migrations_online() -> None:
+    asyncio.run(run_async_migrations())
 
 
 if context.is_offline_mode():
