@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
     postgres_connection = f"postgresql+asyncpg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}:{settings.POSTGRES_PORT}/{settings.POSTGRES_MAIN_DATABASE}"
     
     app.db_engine = create_async_engine(url=postgres_connection)
-    app.db_client = sessionmaker(bind=app.db_engine, class_=AsyncSession, expire_on_commit=False)
+    app.db_client = sessionmaker(app.db_engine, class_=AsyncSession, expire_on_commit=False)
     
     print(f"Connected to PostgreSQL Database: '{settings.POSTGRES_MAIN_DATABASE}'")#Complete
     
@@ -49,7 +49,7 @@ async def lifespan(app: FastAPI):
     finally:
         
         print("Closing PostgreSQL connection...")
-        app.db_engine.dispose()
+        await app.db_engine.dispose()
         print("PostgreSQL connection cleanly closed.")
         #############################################################
         print(f"Closing VectorDB {settings.VECTOR_DB_BACKEND} connection...")
