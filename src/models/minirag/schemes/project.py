@@ -1,9 +1,11 @@
-from .minirag_base import SQLAlchemyBase
+#from .minirag_base import SQLAlchemyBase
 from sqlalchemy import Column, INTEGER, DateTime, func, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
-from enums.DataBaseEnum import DataBaseEnum
+#from ...enums.DataBaseEnum import DataBaseEnum
+from models.minirag.schemes.minirag_base import SQLAlchemyBase
+from models.enums.DataBaseEnum import DataBaseEnum
 
 class Project(SQLAlchemyBase):
     
@@ -18,5 +20,5 @@ class Project(SQLAlchemyBase):
     chunks = relationship("DataChunk", back_populates="project")
     
     __table_args__ = (
-        Index("ix_project_id", project_id)
+        Index("ix_project_id", project_id),
     )

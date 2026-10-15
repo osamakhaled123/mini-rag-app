@@ -3,7 +3,7 @@ from sqlalchemy import Column, INTEGER, Index, func, String, DateTime, ForeignKe
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 import uuid
-from enums.DataBaseEnum import DataBaseEnum
+from models.enums.DataBaseEnum import DataBaseEnum
 
 class Asset(SQLAlchemyBase):
     

@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel
-from enums.DataBaseEnum import DataBaseEnum
+from models.enums.DataBaseEnum import DataBaseEnum
 
 class DataChunk(SQLAlchemyBase):
     
@@ -25,7 +25,8 @@ class DataChunk(SQLAlchemyBase):
     
     __table_args__ = (
         Index("ix_chunk_project_id", chunk_project_id),
-        Index("ix_chunk_asset_id", chunk_asset_id)
+        Index("ix_chunk_asset_id", chunk_asset_id),
+        Index("ix_chunk_order", chunk_order)
     )
     
     
