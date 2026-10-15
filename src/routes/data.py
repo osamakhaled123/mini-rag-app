@@ -8,7 +8,7 @@ import aiofiles
 import logging
 from .schemes.data import ProcessingRequest, AssetDeletionRequest
 from models import ProjectModel, ChunkModel, AssetModel
-from models.db_schemes import DataChunk, Asset 
+from models.minirag.schemes import DataChunk, Asset 
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -23,7 +23,7 @@ async def upload_file(request: Request,
                       file: UploadFile,
                       app_settings: Settings = Depends(get_settings)):
     
-    project_model = await ProjectModel.create_instance(db_client=request.app.db_client)
+    project_model = ProjectModel(db_client=request.app.db_client)
     project = await project_model.get_project_or_create_one(project_id=project_id)
     
     data_controller = DataController()
@@ -57,7 +57,7 @@ async def upload_file(request: Request,
             )
       
     #store the assets into the database
-    asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
+    asset_model = AssetModel(db_client=request.app.db_client)
     
     asset_resource = Asset(
             asset_project_id=project.id,
@@ -89,10 +89,10 @@ async def process_endpoint(request: Request,
     overlap_size = process_request.overlap_size
     do_reset = process_request.do_reset
     
-    project_model = await ProjectModel.create_instance(db_client=request.app.db_client)
+    project_model = ProjectModel(db_client=request.app.db_client)
     project = await project_model.get_project_or_create_one(project_id=project_id)
-    chunk_model = await ChunkModel.create_instance(db_client=request.app.db_client)
-    asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
+    chunk_model = ChunkModel(db_client=request.app.db_client)
+    asset_model = AssetModel(db_client=request.app.db_client)
     
     nlp_controller = NLPController(
         vectordb_client=request.app.vectordb_client,
@@ -208,9 +208,9 @@ async def delete_file(request: Request,
     vectorDB=delete_asset_request.vectorDB
     chunks=delete_asset_request.chunks
         
-    asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
-    project_model = await ProjectModel.create_instance(db_client=request.app.db_client)
-    chunk_model = await ChunkModel.create_instance(db_client=request.app.db_client)
+    asset_model = AssetModel(db_client=request.app.db_client)
+    project_model = ProjectModel(db_client=request.app.db_client)
+    chunk_model = ChunkModel(db_client=request.app.db_client)
 
     project = await project_model.get_project_or_create_one(project_id=project_id)
     asset_record = await asset_model.get_asset_record(
