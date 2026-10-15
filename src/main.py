@@ -35,7 +35,7 @@ async def lifespan(app: FastAPI):
                                              embedding_size=settings.EMBEDDING_SIZE)
     
     #########################################################################################
-    vectordb_provider_factory = VectorDBProviderFactory(config=settings)
+    vectordb_provider_factory = VectorDBProviderFactory(config=settings, db_client=app.db_client)
     app.vectordb_client = vectordb_provider_factory.create(provider=settings.VECTOR_DB_BACKEND)
     
     await app.vectordb_client.connect()
