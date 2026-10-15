@@ -1,4 +1,4 @@
-from minirag.schemes import Asset
+from ..minirag.schemes import Asset
 from .BaseDataModel import BaseDataModel
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.future import select
@@ -8,12 +8,7 @@ from sqlalchemy.dialects.postgresql import UUID
 class AssetModel(BaseDataModel):
     def __init__(self, db_client: sessionmaker):
         super().__init__(db_client=db_client)
-        
-    @classmethod
-    async def create_instance(cls, db_client: sessionmaker):
-        instance = cls(db_client=db_client)
-        return instance   
-                
+
     async def create_asset(self, asset: Asset):       
         async with self.db_client() as session:
             async with session.begin():
@@ -30,8 +25,9 @@ class AssetModel(BaseDataModel):
                     Asset.asset_project_id == asset_project_id,
                     Asset.asset_type == asset_type 
                 )
-                records = await session.execute(query).scalars().all()
-        return records
+                records = await session.execute(query)
+                results = records.scalars().all()
+        return results
                 
         
         # records = await self.collection.find({

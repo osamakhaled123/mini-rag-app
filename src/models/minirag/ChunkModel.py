@@ -1,4 +1,4 @@
-from minirag.schemes import DataChunk
+from ..minirag.schemes import DataChunk
 from .BaseDataModel import BaseDataModel
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.future import select
@@ -8,11 +8,6 @@ from sqlalchemy.dialects.postgresql import UUID
 class ChunkModel(BaseDataModel):
     def __init__(self, db_client: sessionmaker):
         super().__init__(db_client=db_client)
-        
-    @classmethod    
-    async def create_instance(cls, db_client: sessionmaker):
-        instance = cls(db_client=db_client)
-        return instance
         
     async def create_chunk(self, chunk: DataChunk):
         async with self.db_client() as session:
@@ -75,5 +70,6 @@ class ChunkModel(BaseDataModel):
         async with self.db_client() as session:
             async with session.begin():
                 query = select(func.count(DataChunk.id)).where(DataChunk.chunk_project_id == project_id)
-                num_records = await session.execute(query).scalar()
+                execution = await session.execute(query)
+                num_records = execution.scalar_one()
         return num_records

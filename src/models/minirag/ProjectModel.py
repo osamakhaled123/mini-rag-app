@@ -1,4 +1,4 @@
-from minirag.schemes import Project
+from ..minirag.schemes import Project
 from .BaseDataModel import BaseDataModel
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.future import select
@@ -7,11 +7,6 @@ from sqlalchemy import func
 class ProjectModel(BaseDataModel):
     def __init__(self, db_client: sessionmaker):
         super().__init__(db_client=db_client)
-    
-    @classmethod    
-    async def create_instance(cls, db_client: sessionmaker):
-        instance = cls(db_client=db_client)
-        return instance
         
     async def creat_project(self, project: Project): 
         async with self.db_client() as session:
