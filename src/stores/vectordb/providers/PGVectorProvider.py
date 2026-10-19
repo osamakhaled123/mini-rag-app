@@ -11,6 +11,7 @@ from models.minirag.schemes import RetrievedDocument
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql import text as sql_text
 import json
+from fastapi.encoders import jsonable_encoder
 
 class PGVectorProvider(VectorDBInterface):
     def __init__(self, db_client: sessionmaker, 
@@ -32,19 +33,19 @@ class PGVectorProvider(VectorDBInterface):
         self.default_index_name = lambda collection_name: f"{collection_name}_vector_idx"
         
         if DistanceMethodEnums.DOT.value == distance_method:
-            self.distance_mehtod = PGVectorDistanceMethodEnums.DOT.value
+            self.distance_method = PGVectorDistanceMethodEnums.DOT.value
             self.similarity_search_method = PGVectorSimilaritySearchMethodEnums.DOT.value
                 
         elif DistanceMethodEnums.COSINE.value == distance_method:
-            self.distance_mehtod = PGVectorDistanceMethodEnums.COSINE.value
+            self.distance_method = PGVectorDistanceMethodEnums.COSINE.value
             self.similarity_search_method = PGVectorSimilaritySearchMethodEnums.COSINE.value
         
         elif DistanceMethodEnums.MANHATTAN.value == distance_method:
-            self.distance_mehtod = PGVectorDistanceMethodEnums.MANHATTAN.value
+            self.distance_method = PGVectorDistanceMethodEnums.MANHATTAN.value
             self.similarity_search_method = PGVectorSimilaritySearchMethodEnums.MANHATTAN.value
         
         elif DistanceMethodEnums.EUCLIDEAN.value == distance_method:
-            self.distance_mehtod = PGVectorDistanceMethodEnums.EUCLIDEAN.value
+            self.distance_method = PGVectorDistanceMethodEnums.EUCLIDEAN.value
             self.similarity_search_method = PGVectorSimilaritySearchMethodEnums.EUCLIDEAN.value
         
         else:
@@ -58,7 +59,8 @@ class PGVectorProvider(VectorDBInterface):
             async with session.begin():
                 query = sql_text("CREATE EXTENSION IF NOT EXISTS vector")
                 await session.execute(query)
-        await session.commit()
+                await session.commit()
+                self.logger.info("Vector extention is created")
             
     async def disconnect(self):
         pass
@@ -70,11 +72,11 @@ class PGVectorProvider(VectorDBInterface):
         
         async with self.db_client() as session:
             async with session.begin():
-                query = sql_text("SELECT tablename from pg_tables where tablename == :collection_name")
+                query = sql_text("SELECT tablename from pg_tables where tablename = :collection_name")
                 result = await session.execute(query, {"collection_name": collection_name})
                 record = result.scalar_one_or_none()
         
-        return record
+        return bool(record)
     
     async def list_all_collections(self) -> List:
         records = []
@@ -86,16 +88,16 @@ class PGVectorProvider(VectorDBInterface):
         return records
 
     async def delete_collection(self, collection_name: str):
-        is_exist = await self.is_collection_exist(collection_name=collection_name)
-        if not is_exist:
-            self.logger.error(f"{collection_name} collection to be deleted is not exist")
+        
+        if not await self.is_collection_exist(collection_name=collection_name):
+            self.logger.warning(f"{collection_name} collection to be deleted is not exist")
             return None
         
         async with self.db_client() as session:
             async with session.begin():
                 self.logger.info(f"Deleting collection: {collection_name}")
                 
-                query = sql_text(f"DROP TABLE IF EXISTS {collection_name}")
+                query = sql_text(f"DROP TABLE {collection_name}")
                 await session.execute(query)
                 await session.commit()
         
@@ -109,7 +111,7 @@ class PGVectorProvider(VectorDBInterface):
             
         async with self.db_client() as session:
             async with session.begin():
-                query = sql_text("SELECT schemename, tablename, tableowner, tablespace, hasindexes "
+                query = sql_text("SELECT schemaname, tablename, tableowner, tablespace, hasindexes "
                                  "from pg_tables "
                                  "where tablename = :collection"
                                  )
@@ -123,7 +125,7 @@ class PGVectorProvider(VectorDBInterface):
                 
                 return {
                     "table_info":{
-                        "schemename": table_data[0],
+                        "schemaname": table_data[0],
                         "tablename": table_data[1],
                         "tableowner": table_data[2],
                         "tablespace": table_data[3],
@@ -139,12 +141,25 @@ class PGVectorProvider(VectorDBInterface):
                             do_reset: bool = False):
         
         if do_reset:
-            _ = await self.delete_collection(collection_name=collection_name)
-        
-        else:
-            is_collection_exist = self.is_collection_exist(collection_name=collection_name)
-            if is_collection_exist:
-                self.logger.error(f"{collection_name} collection is already exist")
+            deleted = await self.delete_collection(
+                collection_name=collection_name
+            )
+            
+            exists = await self.is_collection_exist(
+            collection_name=collection_name
+            )   
+            
+            self.logger.info(
+            f"Delete returned: {deleted}; table still exists: {exists}"
+            )
+
+            if exists:
+                raise RuntimeError(
+                    f"Collection {collection_name} still exists after deletion"
+                )
+
+            
+        elif await self.is_collection_exist(collection_name=collection_name):
                 return False
                             
         async with self.db_client() as session:
@@ -159,7 +174,7 @@ class PGVectorProvider(VectorDBInterface):
                     f"{PGVectorTableSchemeEnums.VECTOR.value} vector({embedding_size}), "
                     f"{PGVectorTableSchemeEnums.CHUNK_ID.value} UUID, "
                     f"{PGVectorTableSchemeEnums.ASSET_ID.value} UUID, "
-                    f"{PGVectorTableSchemeEnums.METADATA.value} jsonb \'{{}}'\, "
+                    f"{PGVectorTableSchemeEnums.METADATA.value} jsonb DEFAULT '{{}}'::jsonb, "
                     f"FOREIGN KEY ({PGVectorTableSchemeEnums.CHUNK_ID.value}) REFERENCES {DataBaseEnum.COLLECTION_CHUNK_NAME.value}({PGVectorTableSchemeEnums.ID.value}) "
                     ")"
                 )
@@ -211,7 +226,9 @@ class PGVectorProvider(VectorDBInterface):
                 })
                 
                 await session.commit()
-                
+        
+        await self.create_vector_index(collection_name=collection_name)
+        
         return True
     
     async def insert_many(self, collection_name: str,
@@ -279,6 +296,9 @@ class PGVectorProvider(VectorDBInterface):
                     
                     await session.execute(batch_insert_query, values)
                     await session.commit()
+                    
+        
+        await self.create_vector_index(collection_name=collection_name)
         
         return True
     
@@ -287,7 +307,7 @@ class PGVectorProvider(VectorDBInterface):
                             vector: list,
                             limit: int) -> List[RetrievedDocument]:
         
-        is_collection_existed = await self.is_collection_existed(collection_name=collection_name)
+        is_collection_existed = await self.is_collection_exist(collection_name=collection_name)
         if not is_collection_existed:
             self.logger.error(f"Can not search for records in a non-existed collection: {collection_name}")
             return False
@@ -309,13 +329,13 @@ class PGVectorProvider(VectorDBInterface):
                 
                 records = result.fetchall()
                 
-                return[
+                return jsonable_encoder([
                     RetrievedDocument(
                         text=rec.text,
                         score=rec.score
                     )
                     for rec in records
-                ]
+                ])
                 
     
     async def is_index_exist(self, collection_name: str):
@@ -356,8 +376,8 @@ class PGVectorProvider(VectorDBInterface):
                 self.logger.info(f"START: Creating vector index ({index_name}) for collection: {collection_name}")
                 
                 creating_index_query = sql_text(
-                    f"CREATE INDEX {index_name} on {collection_name} "
-                    f"USING index {indexing_type} ({PGVectorTableSchemeEnums.VECTOR.value} {self.distance_method})"
+                    f"CREATE INDEX {index_name} ON {collection_name} "
+                    f"USING {indexing_type} ({PGVectorTableSchemeEnums.VECTOR.value} {self.distance_method})"
                 )
                 
                 await session.execute(creating_index_query)
@@ -385,6 +405,9 @@ class PGVectorProvider(VectorDBInterface):
                     f"DELETE FROM {collection_name} " 
                     f"WHERE {PGVectorTableSchemeEnums.ASSET_ID} = :asset_id"
                 )
+                try:
+                    await session.execute(query, {"asset_id": asset_id})
+                    await session.commit()
                 
-                await session.execute(query, {"asset_id": asset_id})
-                await session.commit()
+                except Exception as e:
+                    self.logger.error(f"Error when Deleting embedding chunks belonging to {asset_id} asset")
