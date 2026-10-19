@@ -33,7 +33,3 @@ class DataChunk(SQLAlchemyBase):
 class RetrievedDocument(BaseModel):
     text: str
     score: float
-    inserted_at: Optional[datetime]        
-    chunk_id: str
-    asset_id: str
-    id: str
